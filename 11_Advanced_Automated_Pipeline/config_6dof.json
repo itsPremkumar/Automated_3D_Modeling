@@ -1,0 +1,32 @@
+{
+    "cad_parameters": {
+        "base_radius": 50.0,
+        "base_height": 20.0,
+        "bicep_length": 120.0,
+        "forearm_length": 100.0,
+        "link_thickness": 20.0
+    },
+    "manufacturing_rules": {
+        "material_density_g_cm3": 1.04,
+        "max_allowable_stress_mpa": 30.0
+    },
+    "bom": [
+        {"name": "Base_Mount", "quantity": 1, "material": "ABS"},
+        {"name": "Waist_Link", "quantity": 1, "material": "ABS"},
+        {"name": "Bicep_Link", "quantity": 1, "material": "ABS"},
+        {"name": "Forearm_Link", "quantity": 1, "material": "ABS"},
+        {"name": "Wrist_Pitch_Link", "quantity": 1, "material": "ABS"},
+        {"name": "Wrist_Roll_Mount", "quantity": 1, "material": "ABS"},
+        {"name": "MG996R_Servo", "quantity": 6, "material": "Electronics"}
+    ],
+    "urdf_kinematics": {
+        "links": ["base_link", "waist_link", "bicep_link", "forearm_link", "wrist_pitch_link", "wrist_roll_link"],
+        "joints": [
+            {"name": "joint_waist", "type": "revolute", "parent": "base_link", "child": "waist_link", "origin": "0 0 20"},
+            {"name": "joint_shoulder", "type": "revolute", "parent": "waist_link", "child": "bicep_link", "origin": "0 0 40"},
+            {"name": "joint_elbow", "type": "revolute", "parent": "bicep_link", "child": "forearm_link", "origin": "0 0 160"},
+            {"name": "joint_wrist_pitch", "type": "revolute", "parent": "forearm_link", "child": "wrist_pitch_link", "origin": "0 0 100"},
+            {"name": "joint_wrist_roll", "type": "revolute", "parent": "wrist_pitch_link", "child": "wrist_roll_link", "origin": "0 0 20"}
+        ]
+    }
+}

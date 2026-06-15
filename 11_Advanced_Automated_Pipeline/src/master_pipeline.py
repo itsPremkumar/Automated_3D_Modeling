@@ -87,16 +87,35 @@ def generate_bom(models_dir, config):
     return bom_path
 
 def generate_urdf(models_dir, part_name, config):
-    # Dynamic URDF Generation Placeholder
     urdf_path = os.path.join(models_dir, f"{part_name}.urdf")
-    urdf_content = f"""<?xml version="1.0"?>
-<robot name="{part_name}">
-  <link name="base_link">
+    
+    kinematics = config.get("urdf_kinematics", None)
+    
+    urdf_content = f'<?xml version="1.0"?>\n<robot name="{part_name}">\n'
+    
+    if kinematics:
+        for link in kinematics.get("links", []):
+            urdf_content += f'''  <link name="{link}">
     <visual><geometry><mesh filename="{part_name}.stl" /></geometry></visual>
     <collision><geometry><mesh filename="{part_name}.stl" /></geometry></collision>
   </link>
-</robot>
-"""
+'''
+        for joint in kinematics.get("joints", []):
+            urdf_content += f'''  <joint name="{joint['name']}" type="{joint['type']}">
+    <parent link="{joint['parent']}"/>
+    <child link="{joint['child']}"/>
+    <origin xyz="{joint['origin']}" rpy="0 0 0"/>
+  </joint>
+'''
+    else:
+        # Fallback for simple parts
+        urdf_content += f'''  <link name="base_link">
+    <visual><geometry><mesh filename="{part_name}.stl" /></geometry></visual>
+    <collision><geometry><mesh filename="{part_name}.stl" /></geometry></collision>
+  </link>
+'''
+    urdf_content += "</robot>\n"
+    
     with open(urdf_path, "w") as f:
         f.write(urdf_content)
     return urdf_path
