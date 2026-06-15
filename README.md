@@ -52,6 +52,7 @@ This repository is structured as an escalating series of modeling paradigms, cul
 
 | Module | Description | Core Paradigm |
 | :--- | :--- | :--- |
+| **[`12_Optimus_Prime_Simulation`](./12_Optimus_Prime_Simulation)** | **[CROWN JEWEL]** A native 50KB+ script that builds and simulates a humanoid robot completely autonomously inside Fusion 360. | Native API Simulation |
 | **[`11_Advanced_Automated_Pipeline`](./11_Advanced_Automated_Pipeline)** | **[FLAGSHIP]** The autonomous self-improving AI factory, URDF generator, and MCP validator. | Architecture / CI/CD |
 | [`01_CadQuery`](./01_CadQuery) | Foundational fluent-API parametric modeling scripts. | B-Rep CAD |
 | [`02_Build123d`](./02_Build123d) | Modern context-managed parametric CAD (Recommended). | B-Rep CAD |
