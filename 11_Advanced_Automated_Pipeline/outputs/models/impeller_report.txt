@@ -1,0 +1,6 @@
+--- ENGINEERING REPORT ---
+Material:  Aluminum 6061
+Volume:    50,596.47 mm³
+Mass:      136.61 grams
+Est. Cost: $20.49 USD
+--------------------------

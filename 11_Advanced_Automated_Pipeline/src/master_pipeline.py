@@ -29,13 +29,36 @@ def generate_cad():
     os.makedirs(models_dir, exist_ok=True)
     os.makedirs(renders_dir, exist_ok=True)
 
+    # 4. Automated Engineering Analytics (Mass & Cost)
+    volume_mm3 = impeller.part.volume
+    density_al_g_cm3 = 2.7 # Aerospace Aluminum 6061
+    mass_g = volume_mm3 * (density_al_g_cm3 / 1000) # Convert mm^3 to cm^3 and multiply by density
+    estimated_cost = mass_g * 0.15 # $0.15 per gram of machined material
+    
+    report = (
+        f"--- ENGINEERING REPORT ---\n"
+        f"Material:  Aluminum 6061\n"
+        f"Volume:    {volume_mm3:,.2f} mm³\n"
+        f"Mass:      {mass_g:,.2f} grams\n"
+        f"Est. Cost: ${estimated_cost:,.2f} USD\n"
+        f"--------------------------\n"
+    )
+    print(report)
+    
     # Export
     step_path = os.path.join(models_dir, "impeller.step")
     stl_path = os.path.join(models_dir, "impeller.stl")
+    report_path = os.path.join(models_dir, "impeller_report.txt")
+    
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(report)
+    
     export_step(impeller.part, step_path)
     export_stl(impeller.part, stl_path)
+        
     print(f"      -> Exported CAD (STEP): {step_path}")
     print(f"      -> Exported Mesh (STL): {stl_path}")
+    print(f"      -> Exported Report (TXT): {report_path}")
     return step_path, renders_dir
 
 def execute_mcp_verification(step_path, renders_dir):
@@ -164,10 +187,10 @@ def main():
     
     try:
         # Step 1: CAD Generation & Export
-        step_path = generate_cad()
+        step_path, renders_dir = generate_cad()
         
         # Step 2: Multi-Angle Visual Verification via MCP
-        execute_mcp_verification(step_path)
+        execute_mcp_verification(step_path, renders_dir)
         
         print("[3/3] Pipeline Execution Complete! All artifacts generated.")
         print("="*60)
