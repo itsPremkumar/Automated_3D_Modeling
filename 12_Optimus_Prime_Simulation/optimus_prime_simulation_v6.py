@@ -844,6 +844,21 @@ def run(context):
                     for mo, s, e, ax in active:
                         self._set(mo, ax, s + (e - s) * t)
                     self._refresh()
+                    
+                    # Continuous Collision Checking during interpolation
+                    if getattr(self, "_strict_mode", False):
+                        mid_hits = self._check(vol_min=0.015)
+                        if mid_hits:
+                            log_msg(f"!!! FATAL KINEMATIC ERROR !!!")
+                            log_msg(f"Mid-animation collision at {t*100:.1f}% of movement step.")
+                            log_msg("Context - The following joints were being driven:")
+                            for mo, s, e, ax in active:
+                                j_name = mo.parentJoint.name if mo.parentJoint else "Unknown Joint"
+                                log_msg(f"   -> {j_name} ({ax}): {math.degrees(s):.1f}° -> {math.degrees(e):.1f}°")
+                            log_msg("Collision Details:")
+                            for hit in mid_hits:
+                                log_msg(f"   -> {hit}")
+                            raise Exception("Structural Interpenetration Detected (Parts passed through each other!)")
 
             def reset_all(self, steps=16):
                 """Return every joint to 0°."""
@@ -1558,8 +1573,14 @@ def run(context):
                                 body2 = r.entityTwo.name
                                 
                                 if comp1 != comp2:
-                                    # Detailed log identifying exact bodies
-                                    hit_str = f"[{comp1} / {body1}] ↔ [{comp2} / {body2}] (Vol: {r.interferenceBody.volume:.3f} cm³)"
+                                    # Extract the exact XYZ coordinate of the collision intersection
+                                    try:
+                                        com = r.interferenceBody.physicalProperties.centerOfMass
+                                        loc_str = f"XYZ:({com.x:.2f}, {com.y:.2f}, {com.z:.2f}) cm"
+                                    except:
+                                        loc_str = "XYZ:(Unknown)"
+                                        
+                                    hit_str = f"[{comp1} / {body1}] ↔ [{comp2} / {body2}] | Vol: {r.interferenceBody.volume:.3f} cm³ | {loc_str}"
                                     hits.append(hit_str)
                                     log_msg(f"COLLISION DETECTED: {hit_str}")
                                     
