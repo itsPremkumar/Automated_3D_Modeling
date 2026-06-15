@@ -66,31 +66,35 @@ def run(_context: str):
         app = adsk.core.Application.get()
         
         files_to_open = [
-            r"c:\one\Automated_3D_Modeling\01_CadQuery\cadquery_cube.step",
-            r"c:\one\Automated_3D_Modeling\02_Build123d\build123d_cube.step",
-            r"c:\one\Automated_3D_Modeling\06_Engineering_Models\pillow_block.step",
-            r"c:\one\Automated_3D_Modeling\06_Engineering_Models\flange_coupling.step"
+            r"c:\one\Automated_3D_Modeling\07_Signed_Distance_Fields\gyroid_metamaterial.stl"
         ]
-        
-        blender_file = r"c:\one\Automated_3D_Modeling\04_Blender_bpy\blender_cube.stl"
-        if os.path.exists(blender_file):
-            files_to_open.append(blender_file)
             
         for model_file in files_to_open:
             if not os.path.exists(model_file):
-                print(f"File not found: {model_file}")
                 continue
                 
-            if not model_file.lower().endswith('.step'):
-                continue
-
             doc = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
             design = adsk.fusion.Design.cast(app.activeProduct)
             rootComp = design.rootComponent
             
             importManager = app.importManager
-            options = importManager.createSTEPImportOptions(model_file)
-            importManager.importToTarget(options, rootComp)
+            if model_file.lower().endswith('.step'):
+                options = importManager.createSTEPImportOptions(model_file)
+            elif model_file.lower().endswith('.stl'):
+                # Note: Fusion API might not have createSTLImportOptions exposed the same way.
+                # However, since this is an STL, we'll just try to use base feature / meshbodies if this fails.
+                # Actually, earlier error was "ImportManager has no attribute createSTLImportOptions".
+                # Let's use the BaseFeature to insert the mesh instead, or insert mesh directly.
+                baseFeature = rootComp.features.baseFeatures.add()
+                baseFeature.startEdit()
+                meshBodies = rootComp.meshBodies.add(model_file, adsk.fusion.MeshUnits.MillimeterMeshUnit, baseFeature)
+                baseFeature.finishEdit()
+                options = None
+            else:
+                continue
+
+            if options:
+                importManager.importToTarget(options, rootComp)
             
             viewport = app.activeViewport
             cam = viewport.camera
