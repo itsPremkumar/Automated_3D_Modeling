@@ -25,6 +25,8 @@ Before diving into the frameworks, it's important to understand the three primar
 
 `Build123d` is the modern, ergonomic successor to CadQuery. It utilizes Python Context Managers (`with` blocks) to implicitly handle the active workplane and part hierarchy. It is the absolute best choice for AI-generated mechanical parts.
 
+![Build123d Cube](02_Build123d/build123d_cube.png)
+
 ### Example
 ```python
 from build123d import *
@@ -49,6 +51,8 @@ export_stl(p.part, "part.stl")
 **Directory**: `01_CadQuery/`
 
 `CadQuery` is the predecessor to Build123d. It uses a "fluent" API where method calls are chained together. It is incredibly powerful but can sometimes be difficult to debug because the state is hidden inside the chain.
+
+![CadQuery Cube](01_CadQuery/cadquery_cube.png)
 
 ### Example
 ```python
@@ -125,7 +129,22 @@ print(f"Center of Mass: {mesh.center_mass}")
 
 ---
 
-## 6. Fusion 360 MCP (Model Context Protocol)
+## 6. Engineering Models
+
+**Paradigm**: Applied Parametric B-Rep (`Build123d`)
+**Directory**: `06_Engineering_Models/`
+
+Contains fully functional, parametric engineering designs generated programmatically and rendered automatically via the Fusion 360 MCP server.
+
+### Pillow Block Bearing
+![Pillow Block Bearing](06_Engineering_Models/pillow_block.png)
+
+### Flange Shaft Coupling
+![Flange Coupling](06_Engineering_Models/flange_coupling.png)
+
+---
+
+## 7. Fusion 360 MCP (Model Context Protocol)
 
 **Paradigm**: Parametric B-Rep via Agentic RPC
 **Directory**: `../ai-autodesk-fusion-mcp/` (External Repository)
