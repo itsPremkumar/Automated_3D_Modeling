@@ -102,3 +102,22 @@ If you wish to expand this project even further, there are three other major adv
 * **How it works**: Treating 3D space as a massive 3D grid of numbers (Voxels), often generated from CT scans or MRIs, and using the Marching Cubes algorithm to convert them to meshes.
 * **Result**: Exact 3D models of human organs, bones, or geographic terrain maps.
 * **Use Case**: Bio-medical engineering (converting MRI DICOM files into 3D printable STL files), or procedural terrain generation for video games.
+
+---
+
+## 6. The "Missing Link" - Autodesk Fusion 360 MCP
+
+**Paradigm**: Agentic Remote Procedure Call (RPC) & Application Orchestration
+
+Unlike the methods above which *generate* files, the Model Context Protocol (MCP) server running inside Fusion 360 represents an entirely different automation paradigm: **Controlling Heavy GUI Applications with AI.**
+
+### ✅ Advantages
+* **Closes the Visual Gap**: Allows an AI agent to computationally generate a file, load it into a professional CAD viewer, frame the camera, and take a screenshot to *visually prove* its work.
+* **Access to Native APIs**: Allows AI agents to directly utilize the massive `adsk.core` API to perform complex physics simulations, rendering, or CAM (Computer Aided Manufacturing) operations without a human ever touching a mouse.
+
+### ❌ Disadvantages
+* **Heavy Dependency**: It is not a lightweight, standalone Python script. It requires a massive desktop application (Fusion 360) to be installed and actively running in the background.
+* **Slower Execution**: Sending RPC commands to a GUI software over a local server is inherently slower than pure programmatic math.
+
+### 🎯 When to Use (Use Case)
+Use the Fusion 360 MCP when you need **Autonomous Visual Validation** (like we did in this project to capture screenshots), or when you need to automate a process that only Fusion 360's proprietary kernel can do, such as generating CNC toolpaths (CAM) or running Finite Element Analysis (FEA) on a generated part.
