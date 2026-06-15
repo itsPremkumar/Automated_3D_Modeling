@@ -1,34 +1,26 @@
 {
     "cad_parameters": {
-        "hub_radius": 25.0,
-        "hub_height": 35.0,
-        "cone_top_radius": 10.0,
-        "bore_radius": 4.0,
-        "blade_count": 12,
-        "blade_angle": 25,
-        "blade_thickness": 1.5,
-        "blade_length": 35.0,
-        "blade_height": 35.0
+        "base_width": 40.0,
+        "base_length": 40.0,
+        "base_thickness": 5.0,
+        "arm_length": 70.0,
+        "arm_width": 10.0,
+        "arm_thickness": 5.0
     },
     "manufacturing_rules": {
-        "material_density_g_cm3": 2.7,
-        "cost_per_gram_usd": 0.15
+        "material_density_g_cm3": 1.25,
+        "max_allowable_stress_mpa": 45.0
     },
     "bom": [
         {
-            "name": "Jet_Engine_Impeller",
+            "name": "Servo_Base_Mount",
             "quantity": 1,
-            "material": "Aluminum_6061"
+            "material": "PLA"
         },
         {
-            "name": "M3x10_Socket_Head_Screw",
-            "quantity": 4,
-            "material": "Stainless_Steel"
-        },
-        {
-            "name": "608ZZ_Bearing",
+            "name": "Robotic_Arm_Link",
             "quantity": 1,
-            "material": "Steel"
+            "material": "PLA"
         }
     ]
 }
