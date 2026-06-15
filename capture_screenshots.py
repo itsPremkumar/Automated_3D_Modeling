@@ -66,7 +66,8 @@ def run(_context: str):
         app = adsk.core.Application.get()
         
         files_to_open = [
-            r"c:\one\Automated_3D_Modeling\07_Signed_Distance_Fields\gyroid_metamaterial.stl"
+            r"c:\one\Automated_3D_Modeling\09_Import_and_Modify\blank_bracket.step",
+            r"c:\one\Automated_3D_Modeling\09_Import_and_Modify\modified_bracket.step"
         ]
             
         for model_file in files_to_open:

@@ -175,7 +175,24 @@ uv run --with trimesh --with build123d --python 3.12 08_File_Conversion/universa
 
 ---
 
-## 9. Fusion 360 MCP (Model Context Protocol)
+## 9. Prompt-Based CAD Modification
+
+**Paradigm**: AI-Driven Autonomous CAD Editing
+**Directory**: `09_Import_and_Modify/`
+
+Demonstrates the workflow for autonomously importing downloaded 3D files and computationally modifying them using natural language prompts.
+
+It uses `build123d` to load a `.step` file, filter geometric faces computationally (e.g. "Select the top base face"), and perform boolean operations (e.g. "Drill a 2x2 grid of mounting holes").
+
+![Downloaded Blank Bracket](09_Import_and_Modify/blank_bracket.png)
+*Original Imported Model*
+
+![Modified Bracket](09_Import_and_Modify/modified_bracket.png)
+*Autonomously Modified Model*
+
+---
+
+## 10. Fusion 360 MCP (Model Context Protocol)
 
 **Paradigm**: Parametric B-Rep via Agentic RPC
 **Directory**: `../ai-autodesk-fusion-mcp/` (External Repository)
