@@ -9,7 +9,7 @@
 
 **An autonomous, self-improving, zero-touch mechanical engineering factory.**
 
-<img src="11_Advanced_Automated_Pipeline/outputs/v010/renders/6dof_robotic_arm_iso.png" alt="Parametric 6-DOF Robotic Arm" width="80%">
+<img src="06_Engineering_Models/flange_coupling.png" alt="Parametric 3D CAD Reference Image" width="80%">
 
 </div>
 
@@ -74,7 +74,7 @@ uv run --with build123d --with trimesh --python 3.12 src/master_pipeline.py --pl
 ## 🧠 Visual Gallery
 
 <div align="center">
-  <img src="11_Advanced_Automated_Pipeline/outputs/v010/renders/6dof_robotic_arm_exploded.png" alt="6-DOF Exploded View" width="45%">
+  <img src="06_Engineering_Models/pillow_block.png" alt="Parametric Pillow Block" width="45%">
   <img src="10_Fusion360_Advanced_Automations/parametric_box.png" alt="Fusion 360 Parametric Box" width="45%">
 </div>
 <br>
