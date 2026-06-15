@@ -33,14 +33,22 @@ def send_request(payload):
         print(f"Connection refused. Ensure Autodesk Fusion 360 is running on {URL}\nError: {e}")
         return None
 
+import argparse
+
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Optimus Prime G1 Simulation Controller")
+    parser.add_argument("--module", type=str, default="ALL", 
+                        choices=["ALL", "rom", "head", "wave", "breathing", "walk", "run", "combat", "transform", "stability", "servo"],
+                        help="Select a specific simulation module to run in isolation.")
+    args = parser.parse_args()
+
     if not os.path.exists(PAYLOAD_FILE):
         print(f"Payload file not found: {PAYLOAD_FILE}")
         sys.exit(1)
 
-    print("Loading Optimus Prime payload (> 50KB)...")
+    print(f"Loading Optimus Prime payload (> 50KB)... [Target: {args.module}]")
     with open(PAYLOAD_FILE, "r", encoding="utf-8") as f:
-        script_content = f.read()
+        script_content = f"TARGET_MODULE = '{args.module}'\n" + f.read()
 
     print("Initializing connection to Fusion 360 MCP...")
     init_payload = {

@@ -699,7 +699,39 @@ def run(context):
                 revolute_joint(f"{side}_Elbow",            fa, ua, ax,0,ELBOW_Z,"x")
                 revolute_joint(f"{side}_Wrist",            ha, fa, ax,0,WRIST_Z+0.8,"x")
 
+                if side == "R":
+                    bl = occs.get("OP_Ion_Blaster")
+                    if bl:
+                        rigid_joint("Blaster_Grip", bl, ha)
+
         build_kinematics()
+
+        # ─── Kinematic Orphan Validation ──────────────────────────────────────
+        def validate_kinematics():
+            """Scans all components to detect disconnected/floating parts."""
+            log_msg("Validating mechanical linkages...")
+            orphans = []
+            
+            # Get all components that are referenced by at least one joint
+            jointed_comps = set()
+            for i in range(root.asBuiltJoints.count):
+                j = root.asBuiltJoints.item(i)
+                if j.occurrenceOne: jointed_comps.add(j.occurrenceOne.component.name)
+                if j.occurrenceTwo: jointed_comps.add(j.occurrenceTwo.component.name)
+                
+            # Torso is the base root, so it doesn't strictly need a parent joint, but check others
+            for comp in comps_list:
+                if comp.name != "OP_Torso" and comp.name not in jointed_comps:
+                    orphans.append(comp.name)
+                    
+            if orphans:
+                log_msg("!!! WARNING: ORPHANED COMPONENTS DETECTED !!!")
+                for o in orphans:
+                    log_msg(f"   -> Component '{o}' has NO joints attached! It will not move with the robot.")
+            else:
+                log_msg("All components successfully bound to the kinematic chain. [ OK ]")
+
+        validate_kinematics()
 
         # Fit view
         try:
@@ -1739,7 +1771,37 @@ def run(context):
         # RUN
         # ═══════════════════════════════════════════════════════════════════
         sim = SimulationEngine(root, comps_list, design, app, ui)
-        sim.run_all_simulations()
+        target = globals().get("TARGET_MODULE", "ALL")
+        
+        log_msg(f"--- BEGINNING SIMULATION SEQUENCE [TARGET: {target}] ---")
+        
+        if target == "ALL":
+            sim.run_all_simulations()
+        elif target == "rom":
+            sim.simulate_rom_tests()
+        elif target == "head":
+            sim.simulate_head_look()
+        elif target == "wave":
+            sim.simulate_wave()
+        elif target == "breathing":
+            sim.simulate_breathing()
+        elif target == "walk":
+            sim.simulate_advanced_walk()
+        elif target == "run":
+            sim.simulate_running()
+        elif target == "combat":
+            sim.simulate_combat_sequence()
+        elif target == "transform":
+            sim.simulate_transformation_to_truck()
+            sim.simulate_truck_driving()
+            sim.simulate_transformation_to_robot()
+        elif target == "stability":
+            sim.simulate_stability()
+        elif target == "servo":
+            sim.simulate_servo_load()
+        else:
+            log_msg(f"Unknown target module '{target}', running ALL.")
+            sim.run_all_simulations()
 
         # ── STL BATCH EXPORT (uncomment to enable) ─────────────────────────
         # EXPORT_DIR = r"C:\OptimusPrime_STL"
