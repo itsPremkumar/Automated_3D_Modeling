@@ -78,3 +78,27 @@ This is a hybrid workflow where we use `build123d` to automatically download or 
 
 ### 🎯 When to Use (Use Case)
 Use this workflow when you have a library of standard hardware (motors, rails, generic brackets) and you want to use an AI agent to **automatically customize them** (e.g., "Import this standard NEMA 17 motor mount and drill custom slots to fit a 2020 extrusion").
+
+---
+
+## 5. Other Advanced Options & Paradigms (To Be Covered)
+
+If you wish to expand this project even further, there are three other major advanced automated 3D modeling paradigms that exist in the industry:
+
+### A. Generative Design & Topology Optimization
+* **Paradigm**: Physics-Driven Automated Modeling.
+* **How it works**: You define a block of material, where the forces (stress/weight) are applied, and where the mounting points are. The algorithm autonomously removes any material that isn't carrying a structural load.
+* **Result**: Creates highly alien, bone-like structures that are incredibly lightweight but mathematically optimized for strength.
+* **Use Case**: Aerospace components, high-end automotive racing parts, and advanced 3D printed structural nodes.
+
+### B. Procedural Polygon Modeling (Blender Python API - `bpy`)
+* **Paradigm**: Vertex/Polygon Mesh Scripting.
+* **How it works**: Instead of solid mathematical curves (CAD), you manipulate vertices, edges, and faces directly using Blender's massive Python API.
+* **Result**: Highly organic meshes, sub-division surfaces, and procedural textures.
+* **Use Case**: Automated character generation, VFX assets, architectural visualizations, and photorealistic rendering. *Do not use this for precision mechanical engineering.*
+
+### C. Pure Voxel & Medical Imaging (NumPy / SciKit-Image)
+* **Paradigm**: 3D Pixel (Voxel) Data Arrays.
+* **How it works**: Treating 3D space as a massive 3D grid of numbers (Voxels), often generated from CT scans or MRIs, and using the Marching Cubes algorithm to convert them to meshes.
+* **Result**: Exact 3D models of human organs, bones, or geographic terrain maps.
+* **Use Case**: Bio-medical engineering (converting MRI DICOM files into 3D printable STL files), or procedural terrain generation for video games.
