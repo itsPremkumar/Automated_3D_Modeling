@@ -22,16 +22,23 @@ def generate_cad():
             with Locations((15, 0, 17.5)): # Shift outwards and up to align with cone
                 Box(35, 1.5, 35, rotation=(25, 0, 0)) # Rotate 25 degrees to cut the air
 
+    # Output directories based on current script location
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    models_dir = os.path.abspath(os.path.join(base_dir, "..", "outputs", "models"))
+    renders_dir = os.path.abspath(os.path.join(base_dir, "..", "outputs", "renders"))
+    os.makedirs(models_dir, exist_ok=True)
+    os.makedirs(renders_dir, exist_ok=True)
+
     # Export
-    step_path = os.path.abspath("impeller.step")
-    stl_path = os.path.abspath("impeller.stl")
+    step_path = os.path.join(models_dir, "impeller.step")
+    stl_path = os.path.join(models_dir, "impeller.stl")
     export_step(impeller.part, step_path)
     export_stl(impeller.part, stl_path)
     print(f"      -> Exported CAD (STEP): {step_path}")
     print(f"      -> Exported Mesh (STL): {stl_path}")
-    return step_path
+    return step_path, renders_dir
 
-def execute_mcp_verification(step_path):
+def execute_mcp_verification(step_path, renders_dir):
     print("[2/3] Executing Multi-Angle Visual Verification via Fusion 360 MCP...")
     
     # We write the native Fusion 360 python script that will run via MCP
@@ -62,7 +69,7 @@ def run(context):
         viewport = app.activeViewport
         viewport.visualStyle = adsk.core.VisualStyles.ShadedWithVisibleEdgesOnlyVisualStyle
         
-        output_dir = r"{os.path.dirname(step_path)}"
+        output_dir = r"{renders_dir}"
         
         views_to_capture = {{
             "top": adsk.core.ViewOrientations.TopViewOrientation,
