@@ -1,0 +1,13 @@
+{
+    "hub_radius": 25.0,
+    "hub_height": 35.0,
+    "cone_top_radius": 10.0,
+    "bore_radius": 4.0,
+    "blade_count": 12,
+    "blade_angle": 25,
+    "blade_thickness": 1.5,
+    "blade_length": 35.0,
+    "blade_height": 35.0,
+    "material_density_g_cm3": 2.7,
+    "cost_per_gram_usd": 0.15
+}
