@@ -40,7 +40,15 @@ if __name__ == "__main__":
     parser.add_argument("--module", type=str, default="ALL", 
                         choices=["ALL", "rom", "head", "wave", "breathing", "walk", "run", "combat", "transform", "stability", "servo"],
                         help="Select a specific simulation module to run in isolation.")
+    parser.add_argument("--stop", action="store_true", 
+                        help="Dynamically stop a running simulation.")
     args = parser.parse_args()
+
+    if args.stop:
+        with open(r"C:\opt_fusion_stop.flag", "w") as f:
+            f.write("STOP")
+        print("Stop command issued! The running Fusion 360 script will abort within 1 frame.")
+        sys.exit(0)
 
     if not os.path.exists(PAYLOAD_FILE):
         print(f"Payload file not found: {PAYLOAD_FILE}")

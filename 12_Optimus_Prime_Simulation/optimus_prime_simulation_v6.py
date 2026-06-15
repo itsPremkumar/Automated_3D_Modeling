@@ -837,7 +837,12 @@ def run(context):
                     pass
 
             def _refresh(self):
-                """Pump events and refresh the viewport."""
+                """Pump events, refresh the viewport, and check for async STOP commands."""
+                import os
+                if os.path.exists(r"C:\opt_fusion_stop.flag"):
+                    try: os.remove(r"C:\opt_fusion_stop.flag")
+                    except: pass
+                    raise Exception("SIMULATION_ABORTED_BY_USER")
                 try:
                     self._app.activeViewport.refresh()
                 except:
@@ -1836,9 +1841,15 @@ def run(context):
         log_msg("Script finished successfully.")
 
     except Exception as e:
-        msg = f"FATAL ERROR:\n{e}\n\n{traceback.format_exc()}"
-        log_msg(msg)
-        if ui:
-            ui.messageBox(msg, "Script Error")
+        if "SIMULATION_ABORTED_BY_USER" in str(e):
+            msg = "ABORTED: Simulation sequence was terminated by external CLI command."
+            log_msg(msg)
+            if ui:
+                ui.messageBox(msg, "Simulation Stopped")
         else:
-            print(msg)
+            msg = f"FATAL ERROR:\n{e}\n\n{traceback.format_exc()}"
+            log_msg(msg)
+            if ui:
+                ui.messageBox(msg, "Script Error")
+            else:
+                print(msg)
