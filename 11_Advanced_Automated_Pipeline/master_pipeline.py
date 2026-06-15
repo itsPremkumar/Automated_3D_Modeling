@@ -5,30 +5,28 @@ import urllib.request
 import traceback
 
 def generate_cad():
-    print("[1/3] Generating Parametric CAD Model (Spur Gear)...")
-    from build123d import BuildPart, Cylinder, PolarLocations, Box, extrude, export_step, export_stl, Mode
+    print("[1/3] Generating Advanced CAD Model (Jet Engine Impeller)...")
+    from build123d import BuildPart, BuildSketch, Cone, Cylinder, PolarLocations, Rectangle, extrude, add, export_step, export_stl, Mode
     
-    # Parametric definitions
-    teeth = 20
-    module = 2
-    pitch_radius = (teeth * module) / 2
-    thickness = 10
-    hole_radius = 5
-    
-    with BuildPart() as gear:
-        # Base cylinder
-        Cylinder(radius=pitch_radius, height=thickness)
-        # Cut center hole
-        Cylinder(radius=hole_radius, height=thickness, mode=Mode.SUBTRACT)
-        # Add teeth
-        with PolarLocations(pitch_radius, teeth):
-            Box(module*2.5, module*2.5, thickness)
+    with BuildPart() as impeller:
+        # 1. The Central Hub (Aerodynamic Tapered Cone)
+        Cone(bottom_radius=25, top_radius=10, height=35)
+        
+        # 2. The Drive Shaft Bore
+        Cylinder(radius=4, height=35, mode=Mode.SUBTRACT)
+        
+        # 3. The Aerodynamic Fan Blades
+        # Array the blade 12 times around the hub
+        with PolarLocations(0, 12):
+            from build123d import Locations, Box
+            with Locations((15, 0, 17.5)): # Shift outwards and up to align with cone
+                Box(35, 1.5, 35, rotation=(25, 0, 0)) # Rotate 25 degrees to cut the air
 
     # Export
-    step_path = os.path.abspath("gear.step")
-    stl_path = os.path.abspath("gear.stl")
-    export_step(gear.part, step_path)
-    export_stl(gear.part, stl_path)
+    step_path = os.path.abspath("impeller.step")
+    stl_path = os.path.abspath("impeller.stl")
+    export_step(impeller.part, step_path)
+    export_stl(impeller.part, stl_path)
     print(f"      -> Exported CAD (STEP): {step_path}")
     print(f"      -> Exported Mesh (STL): {stl_path}")
     return step_path
@@ -72,7 +70,7 @@ def run(context):
         cam.isFitView = True
         viewport.camera = cam
         viewport.refresh()
-        iso_path = os.path.join(output_dir, "gear_iso.png")
+        iso_path = os.path.join(output_dir, "impeller_iso.png")
         viewport.saveAsImageFile(iso_path, 1920, 1080)
         
         # 2. Top View
@@ -80,7 +78,7 @@ def run(context):
         cam.isFitView = True
         viewport.camera = cam
         viewport.refresh()
-        top_path = os.path.join(output_dir, "gear_top.png")
+        top_path = os.path.join(output_dir, "impeller_top.png")
         viewport.saveAsImageFile(top_path, 1920, 1080)
         
         # 3. Front View
@@ -88,7 +86,7 @@ def run(context):
         cam.isFitView = True
         viewport.camera = cam
         viewport.refresh()
-        front_path = os.path.join(output_dir, "gear_front.png")
+        front_path = os.path.join(output_dir, "impeller_front.png")
         viewport.saveAsImageFile(front_path, 1920, 1080)
         
         # Close document

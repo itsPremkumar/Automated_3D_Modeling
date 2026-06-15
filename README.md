@@ -224,7 +224,7 @@ It includes:
 
 This is the ultimate culmination of all automation techniques. It demonstrates an end-to-end "Zero-Touch" Continuous Integration pipeline for Mechanical Engineering.
 A single master script (`master_pipeline.py`) performs the following autonomously:
-1. Procedurally generates a complex Spur Gear using `build123d`.
+1. Procedurally generates a mathematically complex **Jet Engine Impeller** using `build123d` (complete with an aerodynamic hub and polar-arrayed pitched blades).
 2. Exports `.step` and `.stl` formats.
 3. Dispatches a payload via the MCP server to Autodesk Fusion 360.
 4. Natively commands Fusion 360 to load the file, manipulate the 3D camera, and capture three distinct verification images (Isometric, Top, Front).
