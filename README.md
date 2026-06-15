@@ -38,6 +38,7 @@
 
 For deep technical dives, research history, and complete architectural breakdowns, please refer to the `docs/` folder:
 - **[Universal Pipeline Architecture](./docs/Universal_Pipeline_Architecture.md)**: The master design document of the AI factory.
+- **[Modeling Paradigms Reference](./docs/Modeling_Paradigms_Reference.md)**: Detailed technical breakdowns of modules 01-10 (CadQuery, Build123d, Trimesh, MCP).
 - **[Methodology Analysis](./docs/Methodology_Analysis.md)**: The historical evolution of this project from v1 scripts to the v11 autonomous pipeline.
 - **[Pipeline Improvement Analysis](./docs/Pipeline_Improvement_Analysis.md)**: In-depth analysis of the pipeline's modularity and performance.
 - **[Source Code Reference](./docs/SourceCode_Reference.md)**: The original review and critique of the initial repository state.
