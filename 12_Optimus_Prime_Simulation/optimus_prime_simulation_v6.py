@@ -19,7 +19,7 @@
 ║  Final report is shown in a message box AND written to:                      ║
 ║    C:\\opt_fusion_log.txt                                                    ║
 ║                                                                              ║
-║  PRINTING NOTES: 0.3 mm clearance on all moving fits.                       ║
+║  PRINTING NOTES: 0.45 mm clearance on all moving fits.                       ║
 ║  Set shrinkage compensation in your slicer before printing.                  ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 """
@@ -103,7 +103,7 @@ def run(context):
         # ═══════════════════════════════════════════════════════════════════
         # CONSTANTS & COMPONENT REGISTRY
         # ═══════════════════════════════════════════════════════════════════
-        CLEARANCE   = 0.03   # cm = 0.3 mm — moving-fit clearance
+        CLEARANCE   = 0.045  # FIX: Increased to 0.45 mm for FDM print-in-place safety
         comps_list  = []     # all component objects
         occs        = {}     # name → occurrence
 
@@ -244,6 +244,8 @@ def run(context):
                 return
             try:
                 sketch = root.sketches.add(root.xYConstructionPlane)
+                sketch.name = f"JG_{name}"
+                sketch.isVisible = False # FIX: Hide workspace clutter
                 pt = adsk.core.Point3D.create(cx, cy, cz)
                 s_pt = sketch.sketchPoints.add(pt)
                 geom = adsk.fusion.JointGeometry.createByPoint(s_pt)
@@ -263,6 +265,8 @@ def run(context):
                 return
             try:
                 sketch = root.sketches.add(root.xYConstructionPlane)
+                sketch.name = f"JG_{name}"
+                sketch.isVisible = False
                 pt = adsk.core.Point3D.create(cx, cy, cz)
                 s_pt = sketch.sketchPoints.add(pt)
                 geom = adsk.fusion.JointGeometry.createByPoint(s_pt)
@@ -280,6 +284,8 @@ def run(context):
                 return
             try:
                 sketch = root.sketches.add(root.xYConstructionPlane)
+                sketch.name = f"JG_{name}"
+                sketch.isVisible = False
                 pt = adsk.core.Point3D.create(0, 0, 0)
                 s_pt = sketch.sketchPoints.add(pt)
                 geom = adsk.fusion.JointGeometry.createByPoint(s_pt)
