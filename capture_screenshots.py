@@ -66,8 +66,7 @@ def run(_context: str):
         app = adsk.core.Application.get()
         
         files_to_open = [
-            r"c:\one\Automated_3D_Modeling\09_Import_and_Modify\downloaded_model.step",
-            r"c:\one\Automated_3D_Modeling\09_Import_and_Modify\half_model.step"
+            r"c:\one\Automated_3D_Modeling\09_Import_and_Modify\holed_model.step"
         ]
             
         for model_file in files_to_open:
