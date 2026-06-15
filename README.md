@@ -201,7 +201,23 @@ We also successfully ran a live script (`fetch_repo.py`) that queried the public
 
 ---
 
-## 10. Fusion 360 MCP (Model Context Protocol)
+## 10. Advanced Fusion 360 Automations (MCP)
+
+**Paradigm**: Zero-Touch Native CAD API Execution
+**Directory**: `10_Fusion360_Advanced_Automations/`
+
+Demonstrates how to send raw Python payload scripts directly into Autodesk Fusion 360's engine via the Model Context Protocol (MCP) server for entirely headless UI automation.
+
+It includes:
+- **`parametric_generator.py`**: A script that natively draws a sketch and extrudes a box using the `adsk.core` API.
+- **`bulk_exporter.py`**: A script that bypasses UI dialogues to programmatically export STLs using the `ExportManager`.
+- **`run_advanced_mcp.py`**: The host script that connects to the `ws://localhost:27182` websocket and dispatches the scripts as RPC tool calls.
+
+![Parametric Box Generated Natively in Fusion 360](10_Fusion360_Advanced_Automations/parametric_box.png)
+
+---
+
+## 11. Fusion 360 MCP Server (External Wrapper)
 
 **Paradigm**: Parametric B-Rep via Agentic RPC
 **Directory**: `../ai-autodesk-fusion-mcp/` (External Repository)
