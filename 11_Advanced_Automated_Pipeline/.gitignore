@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# Output directories (Local Pipeline Results)
+outputs/
+v*/
+
+# CAD Files
+*.step
+*.stl
+*.3mf
+*.f3d
+*.urdf
+
+# Reports and logs
+*.log
+*.csv
+status.json
+manifest.json
+
+# Build123d / CadQuery specific
+*.brep
+
+# OS specific
+.DS_Store
+Thumbs.db
