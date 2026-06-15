@@ -1,9 +1,18 @@
-def build(config):
+from typing import Tuple, Dict, Any
+
+def build(config: Dict[str, Any]) -> Tuple[Any, str]:
     """
-    6-DOF Robotic Arm Generator Plugin
+    6-DOF Robotic Arm Generator Plugin.
+    
+    Constructs a fully parametric 6-axis robotic arm by sequentially stacking 
+    boxes and cylinders based on link lengths provided in the JSON configuration.
+    
+    Args:
+        config (Dict[str, Any]): The configuration dictionary containing kinematic dimensions.
+        
     Returns:
-        assembly: The generated build123d Compound containing 6 individual links.
-        part_name: A string identifier for the model.
+        Tuple[Any, str]: A tuple containing the build123d Compound (6 distinct solid bodies) 
+                         and the string identifier '6dof_robotic_arm'.
     """
     from build123d import Cylinder, Box, Location, Compound
     
