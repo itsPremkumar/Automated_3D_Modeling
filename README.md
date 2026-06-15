@@ -1,5 +1,9 @@
 # Automated 3D Modeling Frameworks Documentation
 
+<p align="center">
+  <img src="06_Engineering_Models/flange_coupling.png" alt="Parametric 3D CAD Reference Image" width="80%">
+</p>
+
 This repository section contains isolated, automated 3D modeling scripts that allow AI agents and developers to generate parametric 3D models (CAD) or polygon meshes entirely through Python code. This avoids the manual graphical interfaces of traditional software and completely automates the design-to-manufacturing pipeline.
 
 ## Overview of Modeling Paradigms
