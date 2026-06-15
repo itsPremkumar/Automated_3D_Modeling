@@ -10,7 +10,7 @@ def convert_mesh_to_mesh(input_path, output_path):
     print("Conversion successful!")
 
 def convert_cad_to_mesh(input_path, output_path):
-    from build123d import import_step, export_stl, export_obj
+    from build123d import import_step, export_stl
     print(f"Loading CAD model: {input_path}")
     part = import_step(input_path)
     
