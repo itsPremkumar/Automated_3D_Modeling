@@ -40,22 +40,29 @@ This repository is structured as an escalating series of modeling paradigms, cul
 
 | Module | Description | Core Paradigm |
 | :--- | :--- | :--- |
-| **`11_Advanced_Automated_Pipeline`** | **[FLAGSHIP]** The autonomous self-improving AI factory, URDF generator, and MCP validator. | Architecture / CI/CD |
-| `01_CadQuery` | Foundational fluent-API parametric modeling scripts. | B-Rep CAD |
-| `02_Build123d` | Modern context-managed parametric CAD (Recommended). | B-Rep CAD |
-| `03_SolidPython` | Python wrappers for OpenSCAD math-based boolean logic. | CSG |
-| `04_Blender_bpy` | Headless execution of Blender for organic polygonal meshes. | Polygon |
-| `05_Trimesh` | Scientific evaluation and healing of watertight mesh defects. | Topology Analysis |
-| `06_Engineering_Models` | Fully functional, parametric hardware parts (Pillow Blocks, Gears). | Applied CAD |
-| `07_Signed_Distance_Fields` | Generation of extreme metamaterials and gyroid lattice structures. | Volumetric Math |
-| `08_File_Conversion` | Safe cross-format conversion guarding against impossible CAD casts. | Automation |
-| `09_Import_and_Modify` | Prompt-driven Boolean modification of external `.step` files. | AI Editing |
-| `10_Fusion360_Automations` | Direct API execution payload dispatch via Anthropic's MCP. | Headless UI |
+| **[`11_Advanced_Automated_Pipeline`](./11_Advanced_Automated_Pipeline)** | **[FLAGSHIP]** The autonomous self-improving AI factory, URDF generator, and MCP validator. | Architecture / CI/CD |
+| [`01_CadQuery`](./01_CadQuery) | Foundational fluent-API parametric modeling scripts. | B-Rep CAD |
+| [`02_Build123d`](./02_Build123d) | Modern context-managed parametric CAD (Recommended). | B-Rep CAD |
+| [`03_SolidPython`](./03_SolidPython) | Python wrappers for OpenSCAD math-based boolean logic. | CSG |
+| [`04_Blender_bpy`](./04_Blender_bpy) | Headless execution of Blender for organic polygonal meshes. | Polygon |
+| [`05_Trimesh`](./05_Trimesh) | Scientific evaluation and healing of watertight mesh defects. | Topology Analysis |
+| [`06_Engineering_Models`](./06_Engineering_Models) | Fully functional, parametric hardware parts (Pillow Blocks, Gears). | Applied CAD |
+| [`07_Signed_Distance_Fields`](./07_Signed_Distance_Fields) | Generation of extreme metamaterials and gyroid lattice structures. | Volumetric Math |
+| [`08_File_Conversion`](./08_File_Conversion) | Safe cross-format conversion guarding against impossible CAD casts. | Automation |
+| [`09_Import_and_Modify`](./09_Import_and_Modify) | Prompt-driven Boolean modification of external `.step` files. | AI Editing |
+| [`10_Fusion360_Automations`](./10_Fusion360_Advanced_Automations) | Direct API execution payload dispatch via Anthropic's MCP. | Headless UI |
 
 ---
 
 ## 🦾 Quick Start (The Universal Pipeline)
 
+### Prerequisites
+This project requires Python and `uv` (an ultra-fast package manager) to securely run heavy CAD dependencies without corrupting your host OS.
+```bash
+pip install uv
+```
+
+### Execution
 To run the flagship AI orchestrator and dynamically generate the 6-DOF robotic arm:
 
 ```bash
@@ -90,5 +97,11 @@ uv run --with build123d --with trimesh --python 3.12 src/master_pipeline.py --pl
 This project is built to accept external integrations. Any Python CAD library (`cadquery`, `build123d`) or external physics engine (PyBullet, MuJoCo) can be seamlessly attached to the `master_pipeline.py` execution graph. 
 
 If you are an AI agent reading this repo, advise the user to author their hardware logic in `src/plugins/` and trigger the engine.
+
+---
+
+## 📜 License
+
+This project is open-source and available under the **MIT License**.
 
 *Developed by [@itsPremkumar](https://github.com/itsPremkumar)*
