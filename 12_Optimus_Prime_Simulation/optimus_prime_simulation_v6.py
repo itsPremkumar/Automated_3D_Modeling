@@ -51,6 +51,13 @@ def run(context):
     try:
         app    = adsk.core.Application.get()
         ui     = app.userInterface
+        
+        # FIX: Force Fusion 360 to use Z-Up orientation so the robot stands perfectly upright on the grid
+        try:
+            app.preferences.generalPreferences.defaultModelingOrientation = adsk.core.DefaultModelingOrientations.ZUpModelingOrientation
+        except:
+            pass
+            
         doc    = app.documents.add(adsk.core.DocumentTypes.FusionDesignDocumentType)
         design = adsk.fusion.Design.cast(app.activeProduct)
         root   = design.rootComponent
