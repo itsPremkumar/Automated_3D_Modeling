@@ -64,30 +64,27 @@ def run(context):
         
         output_dir = r"{os.path.dirname(step_path)}"
         
-        # 1. Isometric View
+        views_to_capture = {{
+            "top": adsk.core.ViewOrientations.TopViewOrientation,
+            "bottom": adsk.core.ViewOrientations.BottomViewOrientation,
+            "front": adsk.core.ViewOrientations.FrontViewOrientation,
+            "back": adsk.core.ViewOrientations.BackViewOrientation,
+            "left": adsk.core.ViewOrientations.LeftViewOrientation,
+            "right": adsk.core.ViewOrientations.RightViewOrientation,
+            "iso_tr": adsk.core.ViewOrientations.IsoTopRightViewOrientation,
+            "iso_tl": adsk.core.ViewOrientations.IsoTopLeftViewOrientation,
+            "iso_br": adsk.core.ViewOrientations.IsoBottomRightViewOrientation,
+            "iso_bl": adsk.core.ViewOrientations.IsoBottomLeftViewOrientation
+        }}
+        
         cam = viewport.camera
-        cam.viewOrientation = adsk.core.ViewOrientations.IsoTopRightViewOrientation
-        cam.isFitView = True
-        viewport.camera = cam
-        viewport.refresh()
-        iso_path = os.path.join(output_dir, "impeller_iso.png")
-        viewport.saveAsImageFile(iso_path, 1920, 1080)
-        
-        # 2. Top View
-        cam.viewOrientation = adsk.core.ViewOrientations.TopViewOrientation
-        cam.isFitView = True
-        viewport.camera = cam
-        viewport.refresh()
-        top_path = os.path.join(output_dir, "impeller_top.png")
-        viewport.saveAsImageFile(top_path, 1920, 1080)
-        
-        # 3. Front View
-        cam.viewOrientation = adsk.core.ViewOrientations.FrontViewOrientation
-        cam.isFitView = True
-        viewport.camera = cam
-        viewport.refresh()
-        front_path = os.path.join(output_dir, "impeller_front.png")
-        viewport.saveAsImageFile(front_path, 1920, 1080)
+        for view_name, orientation in views_to_capture.items():
+            cam.viewOrientation = orientation
+            cam.isFitView = True
+            viewport.camera = cam
+            viewport.refresh()
+            image_path = os.path.join(output_dir, "impeller_" + view_name + ".png")
+            viewport.saveAsImageFile(image_path, 1920, 1080)
         
         # Close document
         doc.close(False)
