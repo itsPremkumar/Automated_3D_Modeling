@@ -133,7 +133,18 @@ print(f"Center of Mass: {mesh.center_mass}")
 
 ---
 
-## 6. Engineering Models
+## 6. Signed Distance Fields (SDF)
+
+**Paradigm**: Volumetric Mathematical Surfaces
+**Directory**: `07_Signed_Distance_Fields/`
+
+Generates complex engineering metamaterials (like the Gyroid lattice structure) purely from distance-evaluating mathematical equations converted to meshes via Marching Cubes. Perfect for lightweight structural parts.
+
+![Gyroid Metamaterial](07_Signed_Distance_Fields/gyroid_metamaterial.png)
+
+---
+
+## 7. Engineering Models
 
 **Paradigm**: Applied Parametric B-Rep (`Build123d`)
 **Directory**: `06_Engineering_Models/`
@@ -148,7 +159,23 @@ Contains fully functional, parametric engineering designs generated programmatic
 
 ---
 
-## 7. Fusion 360 MCP (Model Context Protocol)
+## 8. Universal File Conversion
+
+**Paradigm**: Cross-format interoperability
+**Directory**: `08_File_Conversion/`
+
+A robust Python script that automatically detects and converts 3D file formats. It safely handles Mesh-to-Mesh conversions (STL -> OBJ) using `trimesh` and CAD-to-Mesh conversions (STEP -> STL) using the OpenCASCADE kernel via `build123d`.
+
+It explicitly handles and guards against impossible conversions, such as Reverse Engineering Mesh-to-CAD (STL -> STEP).
+
+### Example
+```bash
+uv run --with trimesh --with build123d --python 3.12 08_File_Conversion/universal_converter.py input.step output.obj
+```
+
+---
+
+## 9. Fusion 360 MCP (Model Context Protocol)
 
 **Paradigm**: Parametric B-Rep via Agentic RPC
 **Directory**: `../ai-autodesk-fusion-mcp/` (External Repository)
