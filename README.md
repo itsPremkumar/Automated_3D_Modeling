@@ -190,6 +190,15 @@ It uses `build123d` to load a `.step` file, filter geometric faces computational
 ![Modified Bracket](09_Import_and_Modify/modified_bracket.png)
 *Autonomously Modified Model*
 
+**Live Web Download Example**
+We also successfully ran a live script (`fetch_repo.py`) that queried the public FreeCAD repository on GitHub, downloaded an open-source engineering test model (`Schenkel.stp`), and used a second script (`cut_in_half.py`) to compute its bounding box and cleanly slice the entire model exactly in half!
+
+![Downloaded FreeCAD Model](09_Import_and_Modify/downloaded_model.png)
+*Original model downloaded from the web*
+
+![Model Cut in Half](09_Import_and_Modify/half_model.png)
+*Autonomously sliced perfectly in half*
+
 ---
 
 ## 10. Fusion 360 MCP (Model Context Protocol)
