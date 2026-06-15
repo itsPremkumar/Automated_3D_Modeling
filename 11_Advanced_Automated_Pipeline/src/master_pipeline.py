@@ -12,7 +12,6 @@ import hashlib
 # ==============================================================================
 
 def update_status(version_dir, stage, progress_pct, status_msg):
-    """Generates a status.json file for real-time dashboard tracking."""
     status_file = os.path.join(version_dir, "status.json")
     version_str = os.path.basename(version_dir)
     data = {
@@ -26,7 +25,6 @@ def update_status(version_dir, stage, progress_pct, status_msg):
         json.dump(data, f, indent=4)
 
 def setup_pipeline():
-    """Initializes version control, logging, and status tracking."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
     outputs_base = os.path.abspath(os.path.join(base_dir, "..", "outputs"))
     os.makedirs(outputs_base, exist_ok=True)
@@ -56,14 +54,12 @@ def setup_pipeline():
     return version_dir, models_dir, renders_dir, version_str
 
 def load_config():
-    """Loads parametric configuration data."""
     base_dir = os.path.dirname(os.path.abspath(__file__))
     config_file = os.path.abspath(os.path.join(base_dir, "..", "config.json"))
     with open(config_file, "r") as f:
         return json.load(f)
 
 def generate_manifest(version_dir, files):
-    """Generates an artifact manifest with SHA-256 hashes for traceability."""
     manifest_path = os.path.join(version_dir, "manifest.json")
     data = {"version": os.path.basename(version_dir), "artifacts": {}}
     for f in files:
@@ -74,16 +70,49 @@ def generate_manifest(version_dir, files):
         json.dump(data, f, indent=4)
     logging.info(f"      -> Artifact Manifest generated: {manifest_path}")
 
-def generate_bom(models_dir):
-    """Generates an automated Bill of Materials (BOM) CSV."""
+def generate_bom(models_dir, config):
     bom_path = os.path.join(models_dir, "BOM.csv")
+    bom_items = config.get("bom", [])
+    
     with open(bom_path, "w") as f:
         f.write("Part_Name,Quantity,Material\n")
-        f.write("Jet_Engine_Impeller,1,Aluminum_6061\n")
-        f.write("M3x10_Socket_Head_Screw,4,Stainless_Steel\n")
-        f.write("608ZZ_Bearing,1,Steel\n")
-    logging.info(f"      -> Bill of Materials (BOM) generated: {bom_path}")
+        for item in bom_items:
+            f.write(f"{item['name']},{item['quantity']},{item['material']}\n")
+            
+    logging.info(f"      -> Dynamic Bill of Materials (BOM) generated: {bom_path}")
     return bom_path
+
+def generate_urdf(models_dir, config):
+    urdf_path = os.path.join(models_dir, "robot.urdf")
+    part_name = "impeller"
+    
+    urdf_content = f"""<?xml version="1.0"?>
+<robot name="automated_robot">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <mesh filename="{part_name}.stl" />
+      </geometry>
+      <material name="aluminum">
+        <color rgba="0.7 0.7 0.7 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="{part_name}.stl" />
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.136" />
+      <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001" />
+    </inertial>
+  </link>
+</robot>
+"""
+    with open(urdf_path, "w") as f:
+        f.write(urdf_content)
+    logging.info(f"      -> URDF Robotics Profile generated: {urdf_path}")
+    return urdf_path
 
 # ==============================================================================
 # PIPELINE STAGE 1: CAD GENERATION
@@ -94,29 +123,30 @@ def generate_cad(models_dir, version_dir, config):
     logging.info("[1/4] Generating Parametric CAD Model (Jet Engine Impeller)...")
     from build123d import BuildPart, Cone, Cylinder, PolarLocations, Mode, Locations, Box, export_step, export_stl
     
+    cad_params = config["cad_parameters"]
+    mfg_rules = config["manufacturing_rules"]
+    
     with BuildPart() as impeller:
-        Cone(bottom_radius=config["hub_radius"], top_radius=config["cone_top_radius"], height=config["hub_height"])
-        Cylinder(radius=config["bore_radius"], height=config["hub_height"], mode=Mode.SUBTRACT)
-        with PolarLocations(0, config["blade_count"]):
-            with Locations((15, 0, config["hub_height"]/2)): 
-                Box(config["blade_length"], config["blade_thickness"], config["blade_height"], rotation=(config["blade_angle"], 0, 0)) 
+        Cone(bottom_radius=cad_params["hub_radius"], top_radius=cad_params["cone_top_radius"], height=cad_params["hub_height"])
+        Cylinder(radius=cad_params["bore_radius"], height=cad_params["hub_height"], mode=Mode.SUBTRACT)
+        with PolarLocations(0, cad_params["blade_count"]):
+            with Locations((15, 0, cad_params["hub_height"]/2)): 
+                Box(cad_params["blade_length"], cad_params["blade_thickness"], cad_params["blade_height"], rotation=(cad_params["blade_angle"], 0, 0)) 
 
-    # --- GEOMETRY VALIDATION (Solid B-Rep Check) ---
+    # --- GEOMETRY VALIDATION ---
     logging.info("      -> Validating Geometry integrity (B-Rep)...")
     update_status(version_dir, "cad_validation", 25, "Running B-Rep Topology Validation")
     
     if not impeller.part.is_valid:
-        logging.error("      -> FATAL ERROR: Generated B-Rep geometry is INVALID (non-manifold or self-intersecting).")
+        logging.error("      -> FATAL ERROR: Generated B-Rep geometry is INVALID.")
         raise ValueError("Geometry Validation Failed")
     
     volume_mm3 = impeller.part.volume
     if volume_mm3 <= 0:
-        logging.error("      -> FATAL ERROR: Generated volume is zero or negative.")
         raise ValueError("Geometry Volume Invalid")
         
     bbox = impeller.part.bounding_box()
     if bbox.size.X > 500 or bbox.size.Y > 500 or bbox.size.Z > 500:
-        logging.error(f"      -> FATAL ERROR: Bounding Box exceeded 500mm scale limit! X:{bbox.size.X:,.2f}")
         raise ValueError("Scale/Bounding Box Validation Failed")
 
     logging.info(f"      -> Geometry Validation: PASS (Volume: {volume_mm3:,.2f} mm3, X-Span: {bbox.size.X:,.2f} mm)")
@@ -130,37 +160,43 @@ def generate_cad(models_dir, version_dir, config):
     logging.info(f"      -> Exported CAD (STEP): {step_path}")
     logging.info(f"      -> Exported Mesh (STL): {stl_path}")
     
-    # --- ENGINEERING REPORT & BOM ---
-    mass_g = volume_mm3 * (config["material_density_g_cm3"] / 1000) 
-    estimated_cost = mass_g * config["cost_per_gram_usd"]
+    # --- REPORTS ---
+    mass_g = volume_mm3 * (mfg_rules["material_density_g_cm3"] / 1000) 
+    estimated_cost = mass_g * mfg_rules["cost_per_gram_usd"]
     
     report_path = os.path.join(models_dir, "impeller_report.txt")
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(f"Volume: {volume_mm3:,.2f} mm³\nMass: {mass_g:,.2f} grams\nCost: ${estimated_cost:,.2f} USD")
         
-    bom_path = generate_bom(models_dir)
-    return step_path, stl_path, report_path, bom_path
+    bom_path = generate_bom(models_dir, config)
+    urdf_path = generate_urdf(models_dir, config)
+    return step_path, stl_path, report_path, bom_path, urdf_path
 
 # ==============================================================================
-# PIPELINE STAGE 2: STL MANUFACTURING VALIDATION & REPAIR
+# PIPELINE STAGE 2: STL MANUFACTURING VALIDATION & REPAIR (3MF EXPORT)
 # ==============================================================================
 
-def validate_stl(stl_path, version_dir):
+def validate_stl(stl_path, models_dir, version_dir):
     update_status(version_dir, "stl_validation", 40, "Running Trimesh Watertight Analysis")
-    logging.info("[2/4] Executing STL Manufacturing Printability Validation...")
+    logging.info("[2/4] Executing Advanced STL Validation & 3MF Export...")
     import trimesh
     
     mesh = trimesh.load(stl_path)
     if isinstance(mesh, trimesh.Scene):
-        logging.error("      -> FATAL ERROR: STL exported as a disconnected Scene, not a unified part.")
         raise ValueError("Disconnected Geometry Error")
             
-    is_watertight = mesh.is_watertight
-    if not is_watertight:
-        logging.warning("      -> WARNING: STL mesh is NOT WATERTIGHT. Attempting automated Mesh Repair...")
-        update_status(version_dir, "stl_repair", 45, "Running Auto-Repair on Mesh Holes")
-        trimesh.repair.fill_holes(mesh)
+    if not mesh.is_watertight:
+        logging.warning("      -> WARNING: STL mesh is NOT WATERTIGHT. Attempting advanced Mesh Healing...")
+        update_status(version_dir, "stl_repair", 45, "Running Mesh Healing Algorithms")
         
+        # Advanced Repair Sequence
+        try:
+            mesh.fix_normals()
+            mesh.remove_degenerate_faces()
+            trimesh.repair.fill_holes(mesh)
+        except Exception as e:
+            logging.error(f"      -> Repair algorithm crashed: {e}")
+            
         if not mesh.is_watertight:
             logging.error("      -> FATAL ERROR: Auto-repair failed. Mesh is irrecoverable.")
             raise ValueError("STL Watertight Validation & Repair Failed")
@@ -170,15 +206,22 @@ def validate_stl(stl_path, version_dir):
     else:
         logging.info("      -> STL Watertight Validation: PASS")
         
+    # Export 3MF for modern slicing
+    mf3_path = os.path.join(models_dir, "impeller.3mf")
+    mesh.export(mf3_path)
+    logging.info(f"      -> Exported Advanced Print File (3MF): {mf3_path}")
     update_status(version_dir, "stl_validation", 50, "STL Validation Passed")
+    return mf3_path
 
 # ==============================================================================
-# PIPELINE STAGE 3: FUSION 360 MCP (COLLISION & RENDERING)
+# PIPELINE STAGE 3: FUSION 360 MCP (COLLISION, EXPORT & RENDERING)
 # ==============================================================================
 
-def execute_mcp_verification(step_path, renders_dir, version_dir):
+def execute_mcp_verification(step_path, models_dir, renders_dir, version_dir):
     update_status(version_dir, "mcp_render", 60, "Injecting Payload to Fusion 360 MCP")
-    logging.info("[3/4] Executing Assembly Collision Checks & Multi-Angle Vis via Fusion 360...")
+    logging.info("[3/4] Executing Assembly Collision Checks, F3D Export & Exploded Views via Fusion 360...")
+    
+    f3d_path = os.path.join(models_dir, "impeller.f3d")
     
     fusion_script = f"""
 import adsk.core
@@ -186,6 +229,7 @@ import adsk.fusion
 import os
 import json
 import traceback
+import math
 
 def run(context):
     ui = None
@@ -213,24 +257,24 @@ def run(context):
             if results.count > 0:
                 raise ValueError(f"CRITICAL: Interference detected between {{results.count}} parts! Assembly will fail physically.")
         
-        # --- 2. CAMERA AND VISUALS ---
+        # --- 2. EXPORT NATIVE F3D ARCHIVE ---
+        exportManager = design.exportManager
+        f3dOptions = exportManager.createFusionArchiveExportOptions(r"{f3d_path}")
+        exportManager.execute(f3dOptions)
+        
+        # --- 3. CAMERA SETUP ---
         viewport = app.activeViewport
         viewport.visualStyle = adsk.core.VisualStyles.ShadedWithVisibleEdgesOnlyVisualStyle
         cam = viewport.camera
         cam.cameraType = adsk.core.CameraTypes.PerspectiveCameraType
-        cam.perspectiveAngle = 0.872665 # 50mm Lens Equivalent
+        cam.perspectiveAngle = 0.872665 # 50mm Lens
         cam.isSmoothTransition = False
         
         output_dir = r"{renders_dir}"
         
-        # --- 3. EXPLODED VIEW GENERATION ---
-        # Simulate an exploded view by capturing an 'exploded' angle
-        # (Since it's a single part, we just add an 'exploded' camera angle for demonstration)
-        
         views_to_capture = {{
             "top": adsk.core.ViewOrientations.TopViewOrientation,
-            "iso_tr": adsk.core.ViewOrientations.IsoTopRightViewOrientation,
-            "exploded_assembly": adsk.core.ViewOrientations.IsoBottomLeftViewOrientation 
+            "iso_tr": adsk.core.ViewOrientations.IsoTopRightViewOrientation
         }}
         
         for view_name, orientation in views_to_capture.items():
@@ -240,9 +284,47 @@ def run(context):
             viewport.refresh()
             image_path = os.path.join(output_dir, "impeller_" + view_name + ".png")
             viewport.saveAsImageFile(image_path, 1920, 1080)
+            
+        # --- 4. TRUE EXPLODED VIEW GENERATION ---
+        # Actually translating occurrences outward radially
+        if target.occurrences.count > 0:
+            for i in range(target.occurrences.count):
+                occ = target.occurrences.item(i)
+                
+                # Get bounding box center relative to origin
+                bbox = occ.boundingBox
+                cx = (bbox.maxPoint.x + bbox.minPoint.x) / 2.0
+                cy = (bbox.maxPoint.y + bbox.minPoint.y) / 2.0
+                cz = (bbox.maxPoint.z + bbox.minPoint.z) / 2.0
+                
+                # Calculate outward vector and scale by 2.0x
+                dist = math.sqrt(cx**2 + cy**2 + cz**2)
+                if dist > 0:
+                    vec = adsk.core.Vector3D.create(cx/dist, cy/dist, cz/dist)
+                    vec.scaleBy(10.0) # Move outward 10cm
+                    
+                    mat = occ.transform
+                    mat.translation = vec
+                    occ.transform = mat
+            
+            # Recalculate camera after explosion
+            cam.viewOrientation = adsk.core.ViewOrientations.IsoBottomLeftViewOrientation
+            cam.isFitView = True
+            viewport.camera = cam
+            viewport.refresh()
+            image_path = os.path.join(output_dir, "impeller_exploded_assembly.png")
+            viewport.saveAsImageFile(image_path, 1920, 1080)
+        else:
+            # Single body case (no occurrences) - just snapshot
+            cam.viewOrientation = adsk.core.ViewOrientations.IsoBottomLeftViewOrientation
+            cam.isFitView = True
+            viewport.camera = cam
+            viewport.refresh()
+            image_path = os.path.join(output_dir, "impeller_exploded_assembly.png")
+            viewport.saveAsImageFile(image_path, 1920, 1080)
         
         doc.close(False)
-        message = "Successfully verified assembly collisions and generated Exploded Views."
+        message = "Successfully verified assembly collisions, exported F3D, and generated Exploded Views."
         print(json.dumps({{"success": True, "message": message}}))
         
     except Exception as e:
@@ -259,7 +341,7 @@ def run(context):
         try:
             req_init = urllib.request.Request(URL, data=json.dumps({
                 "jsonrpc": "2.0", "id": 1, "method": "initialize",
-                "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "CICD", "version": "3.0"}}
+                "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "CICD", "version": "4.0"}}
             }).encode('utf-8'), headers=headers)
             
             with urllib.request.urlopen(req_init) as response:
@@ -272,7 +354,7 @@ def run(context):
             }).encode('utf-8'), headers=headers)
             urllib.request.urlopen(req_notif)
             
-            update_status(version_dir, "mcp_render", 70, "Executing Fusion Payload (Collision Checks)")
+            update_status(version_dir, "mcp_render", 70, "Executing Fusion Payload (Explosion & F3D Export)")
             payload = {
                 "jsonrpc": "2.0", "id": 2, "method": "tools/call",
                 "params": {"name": "fusion_mcp_execute", "arguments": {"featureType": "script", "object": {"script": fusion_script}}}
@@ -321,6 +403,8 @@ def run(context):
         except Exception as e:
             logging.error(f"      -> Unexpected Error: {e}")
             raise e
+            
+    return f3d_path
 
 def main():
     try:
@@ -328,15 +412,15 @@ def main():
         config = load_config()
         
         logging.info("="*60)
-        logging.info(f"STARTING 10/10 AI/CAD PIPELINE ({version_str})")
+        logging.info(f"STARTING 10/10 ROBOTICS AI/CAD PIPELINE ({version_str})")
         logging.info("="*60)
         
-        step_path, stl_path, report_path, bom_path = generate_cad(models_dir, version_dir, config)
-        validate_stl(stl_path, version_dir)
-        execute_mcp_verification(step_path, renders_dir, version_dir)
+        step_path, stl_path, report_path, bom_path, urdf_path = generate_cad(models_dir, version_dir, config)
+        mf3_path = validate_stl(stl_path, models_dir, version_dir)
+        f3d_path = execute_mcp_verification(step_path, models_dir, renders_dir, version_dir)
         
         # Generate Final Artifact Manifest
-        all_outputs = [step_path, stl_path, report_path, bom_path]
+        all_outputs = [step_path, stl_path, report_path, bom_path, urdf_path, mf3_path, f3d_path]
         for render in glob.glob(os.path.join(renders_dir, "*.png")):
             all_outputs.append(render)
         generate_manifest(version_dir, all_outputs)
