@@ -425,7 +425,7 @@ def run(context):
         SHOULDER_CTR = 40.5
         HEAD_CTR     = 46.5
         HIP_X        =  5.8
-        SHOULDER_X   = 11.0
+        SHOULDER_X   = 13.0
         ELBOW_Z      = 34.0
         WRIST_Z      = 28.0
         HIP_JOINT_Z  = 25.8
@@ -1355,6 +1355,8 @@ def run(context):
                     ("R_Shoulder_Cluster",  0,'pitch'),
                     ("L_Shoulder_Cluster", 90,'yaw'),
                     ("R_Shoulder_Cluster",-90,'yaw'),
+                    ("L_Shoulder_Cluster",  0,'roll'),
+                    ("R_Shoulder_Cluster",  0,'roll'),
                 ], steps=12)
 
                 hits    = self._check()
@@ -1523,14 +1525,13 @@ def run(context):
             # ─────────────────────────────────────────────────────────────
             def _check(self, vol_min=0.015):
                 """
-                Sample up to 64 structural bodies and run Fusion's
-                interference analyser. Returns list of description strings.
+                Sample ALL structural bodies and run Fusion's
+                interference analyser. Returns detailed description strings.
                 """
                 SKIP = {"Marker","Pivot","_Vis","Horn","MtA","Wire",
                         "Axle","Scope","Antenna","Badge","Tip","Bore"}
                 try:
                     bodies = adsk.core.ObjectCollection.create()
-                    count  = 0
                     for comp in self._comps:
                         for body in comp.bRepBodies:
                             if not body.isSolid:
@@ -1538,31 +1539,33 @@ def run(context):
                             if body.name and any(s in body.name for s in SKIP):
                                 continue
                             bodies.add(body)
-                            count += 1
-                            if count >= 64:
-                                break
-                        if count >= 64:
-                            break
+                            
                     if bodies.count < 2:
                         return []
+                        
                     inp = self._design.createInterferenceInput(bodies)
                     inp.isCoincidentFacesInterference = False
                     res = self._design.analyzeInterference(inp)
                     hits = []
+                    
                     if res and res.count > 0:
-                        for i in range(min(res.count, 20)):
+                        for i in range(res.count):
                             r = res.item(i)
                             if r.interferenceBody and r.interferenceBody.volume > vol_min:
-                                n1 = (r.entityOne.parentComponent.name
-                                      if r.entityOne.parentComponent else "?")
-                                n2 = (r.entityTwo.parentComponent.name
-                                      if r.entityTwo.parentComponent else "?")
-                                if n1 != n2:
-                                    hits.append(f"{n1} ↔ {n2} "
-                                                f"({r.interferenceBody.volume:.3f} cm³)")
+                                comp1 = r.entityOne.parentComponent.name if r.entityOne.parentComponent else "?"
+                                comp2 = r.entityTwo.parentComponent.name if r.entityTwo.parentComponent else "?"
+                                body1 = r.entityOne.name
+                                body2 = r.entityTwo.name
+                                
+                                if comp1 != comp2:
+                                    # Detailed log identifying exact bodies
+                                    hit_str = f"[{comp1} / {body1}] ↔ [{comp2} / {body2}] (Vol: {r.interferenceBody.volume:.3f} cm³)"
+                                    hits.append(hit_str)
+                                    log_msg(f"COLLISION DETECTED: {hit_str}")
+                                    
                     return list(set(hits))
                 except Exception as ex:
-                    log_msg(f"_check error: {ex}")
+                    log_msg(f"CRITICAL COLLISION ERROR: {traceback.format_exc()}")
                     return []
 
             # ─────────────────────────────────────────────────────────────
