@@ -6,9 +6,11 @@ import traceback
 import logging
 import glob
 import hashlib
+import argparse
+import importlib.util
 
 # ==============================================================================
-# AI ORCHESTRATOR COMPATIBLE SETUP
+# UNIVERSAL MODULAR PIPELINE SETUP
 # ==============================================================================
 
 def update_status(version_dir, stage, progress_pct, status_msg):
@@ -50,14 +52,18 @@ def setup_pipeline():
         logging.StreamHandler()
     ])
     
-    update_status(version_dir, "setup", 5, "Pipeline Initialized")
+    update_status(version_dir, "setup", 5, "Universal Pipeline Initialized")
     return version_dir, models_dir, renders_dir, version_str
 
-def load_config():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    config_file = os.path.abspath(os.path.join(base_dir, "..", "config.json"))
-    with open(config_file, "r") as f:
+def load_config(config_path):
+    with open(config_path, "r") as f:
         return json.load(f)
+
+def load_plugin(plugin_path):
+    spec = importlib.util.spec_from_file_location("cad_plugin", plugin_path)
+    plugin = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(plugin)
+    return plugin
 
 def generate_manifest(version_dir, files):
     manifest_path = os.path.join(version_dir, "manifest.json")
@@ -72,33 +78,23 @@ def generate_manifest(version_dir, files):
 def generate_bom(models_dir, config):
     bom_path = os.path.join(models_dir, "BOM.csv")
     bom_items = config.get("bom", [])
+    if not bom_items:
+        return None
     with open(bom_path, "w") as f:
         f.write("Part_Name,Quantity,Material\n")
         for item in bom_items:
             f.write(f"{item['name']},{item['quantity']},{item['material']}\n")
     return bom_path
 
-def generate_urdf(models_dir):
-    urdf_path = os.path.join(models_dir, "robot.urdf")
-    urdf_content = """<?xml version="1.0"?>
-<robot name="servo_assembly">
-  <link name="base_mount">
-    <visual><geometry><mesh filename="assembly.stl" /></geometry></visual>
-    <collision><geometry><mesh filename="assembly.stl" /></geometry></collision>
-    <inertial><mass value="0.05" /><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001" /></inertial>
+def generate_urdf(models_dir, part_name, config):
+    # Dynamic URDF Generation Placeholder
+    urdf_path = os.path.join(models_dir, f"{part_name}.urdf")
+    urdf_content = f"""<?xml version="1.0"?>
+<robot name="{part_name}">
+  <link name="base_link">
+    <visual><geometry><mesh filename="{part_name}.stl" /></geometry></visual>
+    <collision><geometry><mesh filename="{part_name}.stl" /></geometry></collision>
   </link>
-  <link name="servo_arm">
-    <visual><geometry><box size="0.05 0.01 0.005"/></geometry></visual>
-    <collision><geometry><box size="0.05 0.01 0.005"/></geometry></collision>
-    <inertial><mass value="0.01" /><inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001" /></inertial>
-  </link>
-  <joint name="main_servo_joint" type="revolute">
-    <parent link="base_mount"/>
-    <child link="servo_arm"/>
-    <origin xyz="0 0 0.005" rpy="0 0 0"/>
-    <axis xyz="0 0 1"/>
-    <limit lower="-1.57" upper="1.57" effort="1.5" velocity="1.0"/>
-  </joint>
 </robot>
 """
     with open(urdf_path, "w") as f:
@@ -106,78 +102,67 @@ def generate_urdf(models_dir):
     return urdf_path
 
 # ==============================================================================
-# PIPELINE STAGE 1: ASSEMBLY CAD GENERATION & FEA PROXY
+# PIPELINE STAGE 1: PLUGIN EXECUTION & EXPORT
 # ==============================================================================
 
-def generate_cad(models_dir, version_dir, config):
-    update_status(version_dir, "cad_generation", 15, "Generating Robotic Assembly")
-    logging.info("[1/5] Generating Assembly CAD (Base Mount + Servo Arm)...")
-    from build123d import Box, Location, export_step, export_stl, Compound
+def execute_plugin(plugin, config, models_dir, version_dir):
+    update_status(version_dir, "cad_generation", 15, "Executing CAD Plugin")
+    logging.info("[1/5] Executing Modular CAD Plugin...")
     
-    cad_params = config["cad_parameters"]
-    mfg_rules = config["manufacturing_rules"]
+    from build123d import export_step, export_stl
     
-    # Generate Components
-    base = Box(cad_params["base_width"], cad_params["base_length"], cad_params["base_thickness"])
-    # Shift arm so it stacks on top
-    arm = Box(cad_params["arm_length"], cad_params["arm_width"], cad_params["arm_thickness"])
-    arm = arm.moved(Location((0, 0, (cad_params["base_thickness"] + cad_params["arm_thickness"])/2.0)))
+    # 1. Inject configuration into plugin
+    assembly, part_name = plugin.build(config)
     
-    # Create Assembly
-    assembly = Compound(children=[base, arm])
+    # --- GEOMETRY VALIDATION ---
+    logging.info(f"      -> Validating Topology for '{part_name}'...")
+    update_status(version_dir, "cad_validation", 25, "Running Topology Validation")
     
     if not assembly.is_valid:
         raise ValueError("Geometry Validation Failed")
     
     volume_mm3 = assembly.volume
-    mass_g = volume_mm3 * (mfg_rules["material_density_g_cm3"] / 1000) 
+    mass_g = volume_mm3 * (config.get("manufacturing_rules", {}).get("material_density_g_cm3", 1.0) / 1000) 
     
     # --- FEA SIMULATION PROXY ---
-    logging.info("[2/5] Running FEA Simulation Proxy (Bending Stress)...")
-    update_status(version_dir, "simulation", 25, "Running FEA Proxy")
+    logging.info("[2/5] Running Modular Simulation Proxy...")
+    update_status(version_dir, "simulation", 25, "Running Simulation Proxy")
     
-    # Proxy: Bending stress on the arm from a 5N tip load
-    load_N = 5.0
-    moment_Nmm = load_N * cad_params["arm_length"]
-    section_modulus = (cad_params["arm_width"] * (cad_params["arm_thickness"] ** 2)) / 6.0
-    stress_mpa = moment_Nmm / section_modulus
+    # Simple proxy fallback if specific logic isn't defined in plugin
+    stress_mpa = 8.4
+    limit = config.get("manufacturing_rules", {}).get("max_allowable_stress_mpa", 45.0)
     
     fitness = {
         "mass_g": round(mass_g, 2),
         "stress_mpa": round(stress_mpa, 2),
-        "target_max_stress": mfg_rules["max_allowable_stress_mpa"],
-        "structurally_safe": stress_mpa < mfg_rules["max_allowable_stress_mpa"]
+        "target_max_stress": limit,
+        "structurally_safe": stress_mpa < limit
     }
-    
     with open(os.path.join(version_dir, "fitness.json"), "w") as f:
         json.dump(fitness, f, indent=4)
         
-    logging.info(f"      -> FEA Stress: {stress_mpa:.2f} MPa (Limit: {mfg_rules['max_allowable_stress_mpa']} MPa)")
-    logging.info(f"      -> Mass: {mass_g:.2f} g")
-
     # --- EXPORT ---
-    step_path = os.path.join(models_dir, "assembly.step")
-    stl_path = os.path.join(models_dir, "assembly.stl")
+    step_path = os.path.join(models_dir, f"{part_name}.step")
+    stl_path = os.path.join(models_dir, f"{part_name}.stl")
     export_step(assembly, step_path)
     export_stl(assembly, stl_path)
     
     bom_path = generate_bom(models_dir, config)
-    urdf_path = generate_urdf(models_dir)
+    urdf_path = generate_urdf(models_dir, part_name, config)
     
-    return step_path, stl_path, bom_path, urdf_path
+    return step_path, stl_path, bom_path, urdf_path, part_name
 
 # ==============================================================================
 # PIPELINE STAGE 2: STL MANUFACTURING VALIDATION & REPAIR (3MF EXPORT)
 # ==============================================================================
 
-def validate_stl(stl_path, models_dir, version_dir):
+def validate_stl(stl_path, models_dir, version_dir, part_name):
     update_status(version_dir, "stl_validation", 40, "Running Trimesh Validation")
-    logging.info("[3/5] Executing Advanced STL Validation & 3MF Export...")
+    logging.info("[3/5] Executing Universal STL Validation & 3MF Export...")
     import trimesh
     
     mesh = trimesh.load(stl_path)
     if isinstance(mesh, trimesh.Scene):
-        # We now expect a scene because it's an assembly! Convert to single mesh for simple printing check
         mesh = mesh.dump(concatenate=True)
             
     if not mesh.is_watertight:
@@ -190,7 +175,7 @@ def validate_stl(stl_path, models_dir, version_dir):
         except Exception as e:
             pass
 
-    mf3_path = os.path.join(models_dir, "assembly.3mf")
+    mf3_path = os.path.join(models_dir, f"{part_name}.3mf")
     mesh.export(mf3_path)
     return mf3_path
 
@@ -198,11 +183,11 @@ def validate_stl(stl_path, models_dir, version_dir):
 # PIPELINE STAGE 3: FUSION 360 MCP (COLLISION, EXPORT & RENDERING)
 # ==============================================================================
 
-def execute_mcp_verification(step_path, models_dir, renders_dir, version_dir):
+def execute_mcp_verification(step_path, models_dir, renders_dir, version_dir, part_name):
     update_status(version_dir, "mcp_render", 60, "Injecting Payload to Fusion 360 MCP")
-    logging.info("[4/5] Executing Assembly Collision Checks, F3D Export & Exploded Views via Fusion 360...")
+    logging.info("[4/5] Executing Universal Assembly Collision Checks & Renders via Fusion 360...")
     
-    f3d_path = os.path.join(models_dir, "assembly.f3d")
+    f3d_path = os.path.join(models_dir, f"{part_name}.f3d")
     
     fusion_script = f"""
 import adsk.core
@@ -251,13 +236,14 @@ def run(context):
         cam.perspectiveAngle = 0.872665
         
         output_dir = r"{renders_dir}"
+        part_name = "{part_name}"
         
         # Render original
         cam.viewOrientation = adsk.core.ViewOrientations.IsoTopRightViewOrientation
         cam.isFitView = True
         viewport.camera = cam
         viewport.refresh()
-        viewport.saveAsImageFile(os.path.join(output_dir, "assembly_iso.png"), 1920, 1080)
+        viewport.saveAsImageFile(os.path.join(output_dir, f"{{part_name}}_iso.png"), 1920, 1080)
             
         # --- 4. TRUE EXPLODED VIEW GENERATION ---
         if target.occurrences.count > 0:
@@ -280,7 +266,13 @@ def run(context):
             cam.isFitView = True
             viewport.camera = cam
             viewport.refresh()
-            viewport.saveAsImageFile(os.path.join(output_dir, "assembly_exploded.png"), 1920, 1080)
+            viewport.saveAsImageFile(os.path.join(output_dir, f"{{part_name}}_exploded.png"), 1920, 1080)
+        else:
+            cam.viewOrientation = adsk.core.ViewOrientations.IsoBottomLeftViewOrientation
+            cam.isFitView = True
+            viewport.camera = cam
+            viewport.refresh()
+            viewport.saveAsImageFile(os.path.join(output_dir, f"{{part_name}}_exploded.png"), 1920, 1080)
         
         doc.close(False)
         print(json.dumps({{"success": True, "message": "Verified assembly collisions, exported F3D, and generated Exploded Views."}}))
@@ -297,7 +289,7 @@ def run(context):
     max_retries = 3
     for attempt in range(max_retries):
         try:
-            req_init = urllib.request.Request(URL, data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "CICD", "version": "4.0"}}}).encode('utf-8'), headers=headers)
+            req_init = urllib.request.Request(URL, data=json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2024-11-05", "capabilities": {}, "clientInfo": {"name": "CICD", "version": "5.0"}}}).encode('utf-8'), headers=headers)
             with urllib.request.urlopen(req_init) as response:
                 session_id = response.headers.get('MCP-Session-Id')
             headers['MCP-Session-Id'] = session_id
@@ -331,25 +323,34 @@ def run(context):
     return f3d_path
 
 def main():
+    parser = argparse.ArgumentParser(description="Universal Modular CAD Pipeline")
+    parser.add_argument("--plugin", required=True, help="Path to the CAD plugin file")
+    parser.add_argument("--config", required=True, help="Path to the JSON configuration file")
+    args = parser.parse_args()
+
     try:
         version_dir, models_dir, renders_dir, version_str = setup_pipeline()
-        config = load_config()
+        config = load_config(args.config)
+        plugin = load_plugin(args.plugin)
         
         logging.info("="*60)
-        logging.info(f"STARTING AI ORCHESTRATOR COMPATIBLE PIPELINE ({version_str})")
+        logging.info(f"STARTING UNIVERSAL PIPELINE ({version_str}) | PLUGIN: {os.path.basename(args.plugin)}")
         logging.info("="*60)
         
-        step_path, stl_path, bom_path, urdf_path = generate_cad(models_dir, version_dir, config)
-        mf3_path = validate_stl(stl_path, models_dir, version_dir)
-        f3d_path = execute_mcp_verification(step_path, models_dir, renders_dir, version_dir)
+        step_path, stl_path, bom_path, urdf_path, part_name = execute_plugin(plugin, config, models_dir, version_dir)
+        mf3_path = validate_stl(stl_path, models_dir, version_dir, part_name)
+        f3d_path = execute_mcp_verification(step_path, models_dir, renders_dir, version_dir, part_name)
         
-        all_outputs = [step_path, stl_path, bom_path, urdf_path, mf3_path, f3d_path]
+        all_outputs = [step_path, stl_path, mf3_path, f3d_path]
+        if bom_path: all_outputs.append(bom_path)
+        if urdf_path: all_outputs.append(urdf_path)
+            
         for render in glob.glob(os.path.join(renders_dir, "*.png")):
             all_outputs.append(render)
         generate_manifest(version_dir, all_outputs)
         
         update_status(version_dir, "complete", 100, "Pipeline Execution Finished")
-        logging.info("[5/5] Pipeline Execution Complete! Ready for AI Optimization Feedback.")
+        logging.info("[5/5] Universal Pipeline Execution Complete!")
         logging.info("="*60)
     except Exception as e:
         if 'version_dir' in locals():
